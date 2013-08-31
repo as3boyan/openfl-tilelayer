@@ -1,5 +1,7 @@
 package aze.display;
 
+import flash.display3D.Context3DRenderMode;
+import flash.events.ErrorEvent;
 import flash.geom.Point;
 import flash.display.Bitmap;
 import flash.display.BitmapData;
@@ -10,6 +12,13 @@ import flash.display.Sprite;
 import flash.geom.Matrix;
 import flash.geom.Rectangle;
 import flash.Lib;
+import flash.system.Capabilities;
+import haxe.Timer;
+
+#if flash
+import starling.core.Starling;
+import starling.events.Event;
+#end
 
 /**
  * A little wrapper of NME's Tilesheet rendering (for native platform)
@@ -22,6 +31,11 @@ class TileLayer extends TileGroup
 	static var synchronizedElapsed:Float;
 
 	public var view:Sprite;
+	
+	#if flash
+	public var view2:starling.display.Sprite;
+	#end
+	
 	public var useSmoothing:Bool;
 	public var useAdditive:Bool;
 	public var useAlpha:Bool;
@@ -30,11 +44,24 @@ class TileLayer extends TileGroup
 
 	public var tilesheet:TilesheetEx;
 	var drawList:DrawList;
+	
+	public static var starling_init:Bool;
 
 	public function new(tilesheet:TilesheetEx, smooth:Bool=true, additive:Bool=false)
 	{
 		super(this);
-
+		
+		#if flash
+		if (TileLayer.starling_init)
+		{
+			view2 = new starling.display.Sprite();
+			var sprite:starling.display.Sprite = cast(Starling.current.stage.getChildAt(0), starling.display.Sprite);
+			sprite.addChild(view2);
+			
+			view2.addChild(container2);
+		}
+		#end
+		
 		view = new Sprite();
 		view.mouseEnabled = false;
 		view.mouseChildren = false;
@@ -47,9 +74,87 @@ class TileLayer extends TileGroup
 
 		drawList = new DrawList();
 	}
+	
+	public static function initStarling(init:Void->Void):Void 
+	{
+		#if flash11
+		
+		var version:String = Capabilities.version;
+		
+		var major_version:Int = 0;
+		
+		var ereg:EReg = ~/ ([0-9+]+),/;
+		if (ereg.match(version))
+		{
+			major_version = Std.parseInt(ereg.matched(1));
+		}
+		
+		var stage = Lib.current.stage;
+		
+		if (major_version == 11 && Reflect.hasField(stage, "stage3Ds"))
+		{
+			stage.stage3Ds[0].addEventListener(Event.CONTEXT3D_CREATE,	onContextCreated.bind(init) );
+			stage.stage3Ds[0].requestContext3D();
+			
+			stage.stage3Ds[0].addEventListener(ErrorEvent.ERROR, onStage3DError.bind(init) );
+		}
+		else
+		{
+			init();
+		}
+		
+		#else
+		init();
+		#end
+	}
+	
+	#if flash
+	
+	static private function onStage3DError(init:Void->Void, e:ErrorEvent):Void 
+	{
+		var stage = Lib.current.stage;
+		stage.stage3Ds[0].removeEventListener(Event.CONTEXT3D_CREATE,	onContextCreated.bind(init) );
+		stage.stage3Ds[0].removeEventListener(ErrorEvent.ERROR, onStage3DError.bind(init) );
+		
+		init();
+	}
+	
+		
+	static private function onContextCreated(init:Void->Void, e:flash.events.Event):Void 
+	{
+		var stage = Lib.current.stage;
+		stage.stage3Ds[0].removeEventListener(Event.CONTEXT3D_CREATE,	onContextCreated.bind(init) );
+		stage.stage3Ds[0].removeEventListener(ErrorEvent.ERROR, onStage3DError.bind(init) );
+		
+		
+		if (Starling.current == null)
+		{
+			Starling.handleLostContext = true;
+			var mStarling:Starling = new Starling(StarlingSprite, Lib.current.stage, null, stage.stage3Ds[0]);
+			mStarling.shareContext = false;
+			mStarling.start();
+		}
+		
+		var timer:Timer = new Timer(100);
+		timer.run = function ():Void
+		{
+			if (starling_init)
+			{
+				timer.stop();
+				
+				init();
+			}
+		}
+	}
+	
+	#end
 
 	public function render(?elapsed:Int)
 	{
+		#if flash
+		if (starling_init) return;
+		#end
+		
 		drawList.begin(elapsed == null ? 0 : elapsed, useTransforms, useAlpha, useTint, useAdditive);
 		renderGroup(this, 0, 0, 0);
 		drawList.end();
@@ -59,7 +164,12 @@ class TileLayer extends TileGroup
 		view.graphics.clear();
 		tilesheet.drawTiles(view.graphics, drawList.list, useSmoothing, drawList.flags);
 		#end
+		
+		#if !flash
 		return drawList.elapsed;
+		#else
+		return;
+		#end
 	}
 
 	function renderGroup(group:TileGroup, index:Int, gx:Float, gy:Float)
@@ -86,13 +196,11 @@ class TileLayer extends TileGroup
 			var child = group.children[i];
 			if (child.animated) child.step(elapsed);
 
-			#if !flash
-			if (!child.visible) continue;
-			#end
-			
 			#if (flash||js)
 			var group:TileGroup = Std.is(child, TileGroup) ? cast child : null;
 			#else
+			if (!child.visible) 
+				continue;
 			var group:TileGroup = cast child;
 			#end
 
@@ -128,8 +236,8 @@ class TileLayer extends TileGroup
 					var off:Point = sprite.offset;					
 					if (offsetTransform > 0) {
 						var t = sprite.transform;
-						list[index] = sprite.x - off.x * t[0] - off.y * t[2] + gx;
-						list[index+1] = sprite.y - off.x * t[1] - off.y * t[3] + gy;
+						list[index] = sprite.x - off.x * t[0] - off.y * t[1] + gx;
+						list[index+1] = sprite.y - off.x * t[2] - off.y * t[3] + gy;
 						list[index+offsetTransform] = t[0];
 						list[index+offsetTransform+1] = t[1];
 						list[index+offsetTransform+2] = t[2];
@@ -176,16 +284,24 @@ class TileBase
 {
 	public var layer:TileLayer;
 	public var parent:TileGroup;
-	public var x:Float;
-	public var y:Float;
+	private var _x:Float;
+	private var _y:Float;
 	public var animated:Bool;
-	public var visible:Bool;
+	private var _visible:Bool;
 
 	function new(layer:TileLayer)
 	{
 		this.layer = layer;
-		x = y = 0.0;
-		visible = true;
+		
+		if (!TileLayer.starling_init)
+		{
+			x = y = 0.0;
+			visible = true;
+		}
+		else
+		{
+			_x = _y = 0.0;
+		}
 	}
 
 	function init(layer:TileLayer):Void
@@ -197,8 +313,45 @@ class TileBase
 	{
 	}
 
+	function get_y():Float 
+	{
+		return _y;
+	}
+	
+	function set_y(value:Float):Float 
+	{
+		return _y = value;
+	}
+	
+	public var y(get_y, set_y):Float;
+	
+	function get_x():Float 
+	{
+		return _x;
+	}
+	
+	function set_x(value:Float):Float 
+	{
+		return _x = value;
+	}
+	
+	public var x(get_x, set_x):Float;
+	
+	function get_visible():Bool 
+	{
+		return _visible;
+	}
+	
+	function set_visible(value:Bool):Bool 
+	{
+		return _visible = value;
+	}
+	
+	public var visible(get_visible, set_visible):Bool;
+	
 	#if flash
 	function getView():DisplayObject { return null; }
+	function getView2():starling.display.DisplayObject { return null; }
 	#end
 }
 

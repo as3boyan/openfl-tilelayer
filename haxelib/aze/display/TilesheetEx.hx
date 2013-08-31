@@ -5,6 +5,10 @@ import openfl.display.Tilesheet;
 import flash.geom.Point;
 import flash.geom.Rectangle;
 
+#if flash
+import starling.textures.TextureAtlas;
+#end
+
 using StringTools;
 
 /**
@@ -19,6 +23,10 @@ using StringTools;
  */
 class TilesheetEx extends Tilesheet
 {
+	//#if flash
+	//public var texture_atlas:TextureAtlas;
+	//#end
+	
 	public var scale:Float;
 	var defs:Array<String>;
 	var sizes:Array<Rectangle>;
@@ -54,14 +62,14 @@ class TilesheetEx extends Tilesheet
 	}
 
 	#if flash
-	public function addDefinition(name:String, size:Rectangle, bmp:BitmapData)
+	function addDefinition(name:String, size:Rectangle, bmp:BitmapData)
 	{
 		defs.push(name);
 		sizes.push(size);
 		bmps.push(bmp);
 	}
 	#else
-	public function addDefinition(name:String, size:Rectangle, rect:Rectangle, center:Point)
+	function addDefinition(name:String, size:Rectangle, rect:Rectangle, center:Point)
 	{
 		defs.push(name);
 		sizes.push(size);

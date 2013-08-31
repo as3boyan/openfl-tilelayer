@@ -6,6 +6,10 @@ import aze.display.TileSprite;
 import flash.display.DisplayObject;
 import flash.display.Sprite;
 
+#if flash
+import starling.core.Starling;
+#end
+
 /**
  * Tiles container for TileLayer
  * - can contain types compatible with TileSprite or TileGroup
@@ -17,14 +21,17 @@ class TileGroup extends TileBase
 	public var children:Array<TileBase>;
 	#if flash
 	var container:Sprite;
+	var container2:starling.display.Sprite;
 	#end
 
 	public function new(layer:TileLayer)
 	{
 		super(layer);
 		children = new Array<TileBase>();
+		
 		#if flash
 		container = new Sprite();
+		container2 = new starling.display.Sprite();
 		#end
 	}
 
@@ -35,7 +42,60 @@ class TileGroup extends TileBase
 	}
 
 	#if flash
+	
 	override public function getView():DisplayObject { return container; }
+	override public function getView2():starling.display.DisplayObject { return container2; }
+	
+	override private function set_x(value:Float):Float 
+	{
+		if (TileLayer.starling_init)
+		{
+			container2.x = value;
+			return value;
+		}
+		else
+		{
+			return super.set_x(value);
+		}
+	}
+	
+	override private function get_x():Float 
+	{
+		if (TileLayer.starling_init)
+		{
+			return container2.x;
+		}
+		else
+		{
+			return super.get_x();
+		}
+	}
+	
+	override private function set_y(value:Float):Float 
+	{
+		if (TileLayer.starling_init)
+		{
+			container2.y = value;
+			return value;
+		}
+		else
+		{
+			return super.set_y(value);
+		}
+	}
+	
+	override private function get_y():Float 
+	{
+		if (TileLayer.starling_init)
+		{
+			return container2.y;
+		}
+		else
+		{
+			return super.get_y();
+		}
+	}
+	
 	#end
 
 	inline function initChild(item:TileBase)
@@ -60,7 +120,20 @@ class TileGroup extends TileBase
 	{
 		removeChild(item);
 		#if flash
-		container.addChild(item.getView());
+		if (TileLayer.starling_init)
+		{
+			var view2 = item.getView2();
+			container2.addChild(view2);
+			
+			if (Reflect.hasField(view2, "fps"))
+			{
+				Starling.juggler.add(cast view2);
+			}
+		}
+		else
+		{
+			container.addChild(item.getView());
+		}
 		#end
 		initChild(item);
 		return children.push(item);
@@ -70,7 +143,20 @@ class TileGroup extends TileBase
 	{
 		removeChild(item);
 		#if flash
-		container.addChildAt(item.getView(), index);
+		if (TileLayer.starling_init)
+		{
+			var view2 = item.getView2();
+			container2.addChildAt(view2, index);
+			
+			if (Reflect.hasField(view2, "fps"))
+			{
+				Starling.juggler.add(cast view2);
+			}
+		}
+		else
+		{
+			container.addChildAt(item.getView(), index);
+		}
 		#end
 		initChild(item);
 		children.insert(index, item);
@@ -80,6 +166,18 @@ class TileGroup extends TileBase
 	public function removeChild(item:TileBase):TileBase
 	{
 		if (item.parent == null) return item;
+
+		#if flash
+		
+		if (TileLayer.starling_init)
+		{
+			container2.removeChild(item.getView2());
+			item.parent = null;
+			return item;
+		}
+		
+		#end
+		
 		if (item.parent != this) {
 			trace("Invalid parent");
 			return item;
@@ -88,7 +186,7 @@ class TileGroup extends TileBase
 		if (index >= 0) 
 		{
 			#if flash
-			container.removeChild(item.getView());
+				container.removeChild(item.getView());
 			#end
 			children.splice(index, 1);
 			item.parent = null;
@@ -99,7 +197,14 @@ class TileGroup extends TileBase
 	public function removeChildAt(index:Int):TileBase
 	{
 		#if flash
-		container.removeChildAt(index);
+		if (TileLayer.starling_init)
+		{
+			container2.removeChildAt(index);
+		}
+		else
+		{
+			container.removeChildAt(index);
+		}
 		#end
 		var child = children.splice(index, 1)[0];
 		if (child != null) child.parent = null;
@@ -109,7 +214,14 @@ class TileGroup extends TileBase
 	public function removeAllChildren():Array<TileBase>
 	{
 		#if flash
-		while (container.numChildren > 0) container.removeChildAt(0);
+		if (TileLayer.starling_init)
+		{
+			while (container2.numChildren > 0) container2.removeChildAt(0);
+		}
+		else
+		{
+			while (container.numChildren > 0) container.removeChildAt(0);
+		}
 		#end
 		for (child in children)
 			child.parent = null;
@@ -118,7 +230,18 @@ class TileGroup extends TileBase
 
 	public function getChildIndex(item:TileBase):Int
 	{
-		return indexOf(item);
+		#if flash
+		if (TileLayer.starling_init)
+		{
+			return container2.getChildIndex(item.getView2());
+		}
+		else
+		{
+			return indexOf(item);
+		}
+		#else
+			return indexOf(item);
+		#end
 	}
 	
 	public function setChildIndex(item:TileBase, index:Int) 
@@ -127,7 +250,14 @@ class TileGroup extends TileBase
 		if (oldIndex >= 0 && index != oldIndex) 
 		{
 			#if flash
-			container.setChildIndex(item.getView(), index);
+			if (TileLayer.starling_init)
+			{
+				container2.setChildIndex(item.getView2(), index);
+			}
+			else
+			{
+				container.setChildIndex(item.getView(), index);
+			}
 			#end
 			children.splice(oldIndex, 1);
 			children.insert(index, item);

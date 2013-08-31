@@ -1,11 +1,18 @@
 package aze.display;
 
+import aze.display.TileGroup;
 import aze.display.TileLayer;
 import flash.geom.Matrix;
 import flash.display.Bitmap;
 import flash.display.DisplayObject;
 import flash.geom.Point;
 import flash.geom.Rectangle;
+
+#if flash
+import starling.display.BlendMode;
+import starling.display.Image;
+import starling.display.MovieClip;
+#end
 
 /**
  * Static tile for TileLayer
@@ -31,16 +38,38 @@ class TileSprite extends TileBase
 	public var bmp:Bitmap;
 	#end
 
+	#if flash
+	private var _alpha:Float;
+	#else
 	public var alpha:Float;
+	#end
+	
 	public var r:Float;
 	public var g:Float;
 	public var b:Float;
+	
+	#if flash
+	var img:Image;
+	#end
 
 	public function new(layer:TileLayer, tile:String) 
 	{
 		super(layer);
 		_rotation = 0;
+		
+		#if flash
+		if (!TileLayer.starling_init)
+		{
+			alpha = _scaleX = _scaleY = 1;
+		}
+		else
+		{
+			_alpha = _scaleX = _scaleY = 1;
+		}
+		#else
 		alpha = _scaleX = _scaleY = 1;
+		#end
+		
 		_mirror = 0;
 		_indice = -1;
 		#if flash
@@ -50,19 +79,78 @@ class TileSprite extends TileBase
 		_transform = new Array<Float>();
 		#end
 		dirty = true;
-		this.tile = tile;
+		
+		if(!TileLayer.starling_init) this.tile = tile;
+		
+		#if flash
+		if (TileLayer.starling_init && !Reflect.hasField(this, "fps"))
+		{			
+			//img = new Image(layer.tilesheet.texture_atlas.getTextures(tile)[0]);
+			img = new Image(StarlingAssets.texture_atlas.getTextures(tile)[0]);
+			img.alignPivot();
+			size = new Rectangle(0, 0, img.width, img.height);
+				
+			if (layer != null)
+			{
+				if (layer.useAdditive) img.blendMode = BlendMode.ADD;
+			}
+		}
+		#end
 	}
+	
+	#if flash
+	
+	override private function set_x(value:Float):Float 
+	{
+		if (TileLayer.starling_init)
+		{
+			if (_x != value) img.x = value;
+		}
 
+		super.set_x(value);
+		return value;
+	}
+	
+	override private function set_y(value:Float):Float 
+	{
+		if (TileLayer.starling_init)
+		{
+			if (_y != value) img.y = value;
+		}
+		super.set_y(value);
+		return value;
+	}
+	
+	#end
+	
 	override public function init(layer:TileLayer):Void
 	{
-		this.layer = layer;
-		var indices = layer.tilesheet.getAnim(tile);
-		indice = indices[0];
-		size = layer.tilesheet.getSize(indice);
+		#if flash
+		if (!TileLayer.starling_init)
+		{
+			this.layer = layer;
+			var indices = layer.tilesheet.getAnim(tile);
+			indice = indices[0];
+			size = layer.tilesheet.getSize(indice);
+		}
+		else
+		{
+			if (layer != null)
+			{				
+				if (layer.useAdditive) img.blendMode = BlendMode.ADD;
+			}
+		}
+		#else
+			this.layer = layer;
+			var indices = layer.tilesheet.getAnim(tile);
+			indice = indices[0];
+			size = layer.tilesheet.getSize(indice);
+		#end
 	}
-
+	
 	#if flash
 	override public function getView():DisplayObject { return bmp; }
+	override public function getView2():starling.display.DisplayObject { return img; }
 	#end
 
 	public var tile(get_tile, set_tile):String;
@@ -71,7 +159,8 @@ class TileSprite extends TileBase
 	{
 		if (_tile != value) {
 			_tile = value;
-			if (layer != null) init(layer); // update visual
+			
+				if (layer != null) init(layer); // update visual
 		}
 		return value;
 	}
@@ -103,47 +192,133 @@ class TileSprite extends TileBase
 	}
 
 	public var rotation(get_rotation, set_rotation):Float;	
-	inline function get_rotation():Float { return _rotation; }
+	inline function get_rotation():Float 
+	{ 
+		return _rotation; 
+	}
 	function set_rotation(value:Float):Float 
 	{
-		if (_rotation != value) {
-			_rotation = value;
-			dirty = true;
+		
+		#if flash	
+		if (TileLayer.starling_init)
+		{
+			img.rotation = value;
+			
+			if (_rotation != value) 
+			{
+				_rotation = value;
+			}
 		}
+		else
+		{
+			if (_rotation != value) 
+			{
+				_rotation = value;
+				dirty = true;
+			}
+		}
+		#else
+			if (_rotation != value) 
+			{
+				_rotation = value;
+				dirty = true;
+			}
+		#end
 		return value;
 	}
 
 	public var scale(get_scale, set_scale):Float;
-	inline function get_scale():Float { return _scaleX; }
+	inline function get_scale():Float
+	{ 
+		return _scaleX; 
+	}
 	function set_scale(value:Float):Float 
 	{
-		if (_scaleX != value) {
+		#if flash
+		if (TileLayer.starling_init)
+		{
+			if (_scaleX != value || _scaleY != value)
+			{
+			_scaleX = value;
+			_scaleY = value;
+			img.scaleX = img.scaleY = value;
+			}
+		}
+		else
+		{
+			if (_scaleX != value) {
 			_scaleX = value;
 			_scaleY = value;
 			dirty = true;
+			}
 		}
+		#else
+			if (_scaleX != value) {
+			_scaleX = value;
+			_scaleY = value;
+			dirty = true;
+			}
+		#end
+		
 		return value;
 	}
 
 	public var scaleX(get_scaleX, set_scaleX):Float;
-	inline function get_scaleX():Float { return _scaleX; }
+	inline function get_scaleX():Float 
+	{ 
+		return _scaleX; 
+	}
+	
 	function set_scaleX(value:Float):Float 
 	{
-		if (_scaleX != value) {
+		#if flash
+		if (TileLayer.starling_init)
+		{
+			img.scaleX = value;
 			_scaleX = value;
-			dirty = true;
 		}
+		else
+		{
+			if (_scaleX != value) {
+				_scaleX = value;
+				dirty = true;
+			}
+		}
+		#else
+			if (_scaleX != value) {
+				_scaleX = value;
+				dirty = true;
+			}
+		#end
 		return value;
 	}
 
 	public var scaleY(get_scaleY, set_scaleY):Float;
-	inline function get_scaleY():Float { return _scaleY; }
+	inline function get_scaleY():Float
+	{
+		return _scaleY; 
+	}
 	function set_scaleY(value:Float):Float 
 	{
-		if (_scaleY != value) {
+		#if flash
+		if (TileLayer.starling_init)
+		{
+			img.scaleY = value;
 			_scaleY = value;
-			dirty = true;
 		}
+		else
+		{			
+			if (_scaleY != value) {
+				_scaleY = value;
+				dirty = true;
+			}
+		}
+		#else
+			if (_scaleY != value) {
+				_scaleY = value;
+				dirty = true;
+			}
+		#end
 		return value;
 	}
 
@@ -156,12 +331,32 @@ class TileSprite extends TileBase
 	}
 	function set_color(value:Int):Int 
 	{
+		#if flash
+		if (TileLayer.starling_init)
+		{
+			img.color = value;
+		}
+		#end
+		
 		r = (value >> 16) / 255.0;
 		g = ((value >> 8) & 0xff) / 255.0;
 		b = (value & 0xff) / 255.0;
 		return value;
 	}
-
+	
+	#if flash
+	
+	override private function set_visible(value:Bool):Bool 
+	{
+		if (TileLayer.starling_init)
+		{
+			if ( _visible != value) img.visible = value;
+		}
+		return super.set_visible(value);
+	}
+	
+	#end
+	
 	#if !flash
 	public var transform(get_transform, null):Array<Float>;
 	function get_transform():Array<Float>
@@ -177,8 +372,8 @@ class TileSprite extends TileBase
 				var cos = Math.cos(rotation);
 				var sin = Math.sin(rotation);
 				_transform[0] = dirX * cos * sx;
-				_transform[1] = dirX * sin * sx;
-				_transform[2] = -dirY * sin * sy;
+				_transform[1] = dirY * sin * sy;
+				_transform[2] = -dirX * sin * sx;
 				_transform[3] = dirY * cos * sy;
 			}
 			else {
@@ -221,21 +416,55 @@ class TileSprite extends TileBase
 	#end
 
 	public var height(get_height, null):Float;
-	inline function get_height():Float {
+	inline function get_height():Float 
+	{
 		return size.height * _scaleY;
 	}
 
 	public var width(get_width, null):Float;
-	inline function get_width():Float {
+	inline function get_width():Float 
+	{
 		return size.width * _scaleX;
 	}
 
 	public var offset(get_offset, set_offset):Point;
+	
+	#if flash
+	
+	function get_alpha():Float 
+	{
+		return _alpha;
+	}
+	
+	function set_alpha(value:Float):Float 
+	{
+		if (TileLayer.starling_init)
+		{
+			if (_alpha != value) getView2().alpha = value;
+		}
+		return _alpha = value;
+	}
+	
+	public var alpha(get_alpha, set_alpha):Float;
+	
+	#end
+	
 	inline function get_offset():Point { return _offset; }
 	function set_offset(value:Point):Point
 	{
-		if (value == null) _offset = null;
-		else _offset = new Point(value.x / layer.tilesheet.scale, value.y / layer.tilesheet.scale);
+		#if flash
+		if (TileLayer.starling_init)
+		{
+			getView2().pivotX = value.x;
+			getView2().pivotY = value.y;
+		}
+		else
+		{
+			_offset = new Point(value.x / layer.tilesheet.scale, value.y / layer.tilesheet.scale);
+		}
+		#else
+		_offset = new Point(value.x / layer.tilesheet.scale, value.y / layer.tilesheet.scale);
+		#end
 		return _offset;
 	}
 }
