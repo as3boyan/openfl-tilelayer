@@ -3,7 +3,7 @@ openfl-tilelayer
 
 Starling backend was implemented by AS3Boyan.
 Performance was tested using NME Runnermark and it shows up to <h3>11x more score than default tilelayer flash fallback.</h3>
-Currently it can use only one spritesheet.
+Currently it's possible to use only one spritesheet.
 
 In case if Stage3D is not available(or when wmode is not correctly embedded) it will use default NME TileLayer flash implementation by Philippe Elsass(will work just like original TileLayer without Starling backend).
 
