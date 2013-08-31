@@ -20,11 +20,11 @@ Add it to your project.xml(application.xml) just like original tilelayer:
     <haxelib name="tilelayer" />
     
 And you will need Starling to get it working:
-I have already created externs for Starling, so can install it like this:
+I have already created externs for Starling, so you can install it like this:
 
     haxelib git starlingparticles.hx https://github.com/as3boyan/StarlingWithParticleSystemHx
     
-And Add it to your project.xml(application.xml):
+And add it to your project.xml(application.xml):
 
     <haxelib name="starlingparticles.hx" />
 	
