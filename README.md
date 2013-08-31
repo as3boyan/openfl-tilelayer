@@ -1,6 +1,40 @@
 openfl-tilelayer 
 =============
 
+Starling backend was implemented by AS3Boyan.
+Performance was tested using NME Runnermark and it shows up to <h3>11x more score than default tilelayer flash fallback.</h3>
+Currently it can use only one spritesheet.
+
+In case if Stage3D is not available(or when wmode is not correctly embedded) it will use default NME TileLayer flash implementation by Philippe Elsass(will work just like original TileLayer without Starling backend).
+
+NME Runnermark(using Starling backend):
+https://dl.dropboxusercontent.com/u/107033883/TileLayerRunnerMarkStarlingBackend/index.html
+
+### How to install TileLayer with Starling backend:
+
+    haxelib git tilelayer https://github.com/as3boyan/openfl-tilelayer.git
+    
+### How to use Starling backend
+Add it to your project.xml(application.xml) just like original tilelayer:
+
+    <haxelib name="tilelayer" />
+    
+And you will need Starling to get it working:
+I have already created externs for Starling, so can install it like this:
+
+    haxelib git starlingparticles.hx https://github.com/as3boyan/StarlingWithParticleSystemHx
+    
+And Add it to your project.xml(application.xml):
+
+    <haxelib name="starlingparticles.hx" />
+	
+Just add this line before creating anything:
+
+    TileLayer.initStarling(init);
+
+It will run init() function as soon as Starling will be ready for usage.
+If you don't add this line it will run just original tilelayer flash implementation.
+
 This project is an openfl version of nme-tilelayer. The point of this project is to offer the same functionality that nme-tilelayer has but make it compatible with Haxe 3 and openfl.
 
 Openfl-tilelayer is lightweight and very optimized wrapper over openfl's powerful but lowlevel 'drawTiles' which offers the best rendering performance 
