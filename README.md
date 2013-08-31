@@ -12,7 +12,7 @@ https://dl.dropboxusercontent.com/u/107033883/TileLayerRunnerMarkStarlingBackend
 
 ### How to install TileLayer with Starling backend:
 
-    haxelib git tilelayer https://github.com/as3boyan/openfl-tilelayer.git
+    haxelib git tilelayer https://github.com/as3boyan/openfl-tilelayer.git master haxelib
     
 ### How to use Starling backend
 Add it to your project.xml(application.xml) just like original tilelayer:
