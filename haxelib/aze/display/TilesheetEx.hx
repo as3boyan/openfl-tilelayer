@@ -23,9 +23,9 @@ using StringTools;
  */
 class TilesheetEx extends Tilesheet
 {
-	//#if flash
-	//public var texture_atlas:TextureAtlas;
-	//#end
+	#if flash
+	public var texture_atlas:TextureAtlas;
+	#end
 	
 	public var scale:Float;
 	var defs:Array<String>;

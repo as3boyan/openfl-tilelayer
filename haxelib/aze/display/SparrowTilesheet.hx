@@ -26,8 +26,8 @@ class SparrowTilesheet extends TilesheetEx
 		if (TileLayer.starling_init)
 		{
 			#if flash
-			//texture_atlas = new TextureAtlas(Texture.fromBitmapData(img), new flash.xml.XML(xml));
-			StarlingAssets.texture_atlas = new TextureAtlas(Texture.fromBitmapData(img), new flash.xml.XML(xml));
+			texture_atlas = new TextureAtlas(Texture.fromBitmapData(img), new flash.xml.XML(xml));
+			//StarlingAssets.texture_atlas = new TextureAtlas(Texture.fromBitmapData(img), new flash.xml.XML(xml));
 			#end
 		}
 		else

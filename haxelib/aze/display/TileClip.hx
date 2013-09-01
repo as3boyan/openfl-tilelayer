@@ -30,97 +30,91 @@ class TileClip extends TileSprite
 
 	public function new(layer:TileLayer, tile:String, fps = 18)
 	{
-		super(layer, tile);
 		this.fps = fps;
 		animated = loop = true;
-		
-		#if flash
-		if (TileLayer.starling_init)
-		{
-			//mc = new MovieClip(layer.tilesheet.texture_atlas.getTextures(tile), fps);
-			mc = new MovieClip(StarlingAssets.texture_atlas.getTextures(tile), fps);
-			mc.alignPivot();
-			size = new Rectangle(0, 0, mc.width, mc.height);
-			
-			if (layer != null)
-			{
-				if (layer.useAdditive) mc.blendMode = BlendMode.ADD;
-			}
-		}
-		#end
+		super(layer, tile);
 	}
 	
 	#if flash
 	
-	override public function getView2():starling.display.DisplayObject { return mc; }
+	//override public function getView2():starling.display.DisplayObject { return mc; }
+	//
+	//override private function set_x(value:Float):Float 
+	//{
+		//if (TileLayer.starling_init)
+		//{
+			//if(_x != value) mc.x = value;
+		//}
+		//return _x = value;
+	//}
+	//
+	//override private function set_y(value:Float):Float 
+	//{
+		//if (TileLayer.starling_init)
+		//{
+			//if(_y != value) mc.y = value;
+		//}
+		//return _y = value;
+	//}
+	//
+	//override private function set_rotation(value:Float):Float 
+	//{
+		//if (TileLayer.starling_init)
+		//{
+			//if (_rotation != value) mc.rotation = value;
+		//}
+		//
+		//dirty = true;
+		//return _rotation = value;
+	//}
+	//
+	//override private function set_scaleY(value:Float):Float 
+	//{
+		//if (TileLayer.starling_init)
+		//{
+			//if (_scaleY != value) mc.scaleY = value;
+		//}
+		//return _scaleY = value;
+	//}
+	//
+	//override private function set_scale(value:Float):Float 
+	//{
+		//if (TileLayer.starling_init)
+		//{
+			//if (_scaleX != value || _scaleY != value) mc.scaleX = mc.scaleY = value;
+		//}
+		//
+		//_scaleX = value;
+		//_scaleY = value;
+		//return value;
+	//}
+	//
+	//override private function set_scaleX(value:Float):Float 
+	//{
+		//if (TileLayer.starling_init)
+		//{
+			//if (_scaleX != value) mc.scaleX = value;
+		//}
+		//return _scaleX = value;
+	//}
+	//
+	//override private function set_visible(value:Bool):Bool 
+	//{
+		//if (TileLayer.starling_init)
+		//{
+			//if (_visible != value) mc.visible = value;
+		//}
+		//return _visible = value;
+	//}
 	
-	override private function set_x(value:Float):Float 
-	{
-		if (TileLayer.starling_init)
-		{
-			if(_x != value) mc.x = value;
-		}
-		return _x = value;
-	}
-	
-	override private function set_y(value:Float):Float 
-	{
-		if (TileLayer.starling_init)
-		{
-			if(_y != value) mc.y = value;
-		}
-		return _y = value;
-	}
-	
-	override private function set_rotation(value:Float):Float 
-	{
-		if (TileLayer.starling_init)
-		{
-			if (_rotation != value) mc.rotation = value;
-		}
-		
-		dirty = true;
-		return _rotation = value;
-	}
-	
-	override private function set_scaleY(value:Float):Float 
-	{
-		if (TileLayer.starling_init)
-		{
-			if (_scaleY != value) mc.scaleY = value;
-		}
-		return _scaleY = value;
-	}
-	
-	override private function set_scale(value:Float):Float 
-	{
-		if (TileLayer.starling_init)
-		{
-			if (_scaleX != value || _scaleY != value) mc.scaleX = mc.scaleY = value;
-		}
-		
-		_scaleX = value;
-		_scaleY = value;
-		return value;
-	}
-	
-	override private function set_scaleX(value:Float):Float 
-	{
-		if (TileLayer.starling_init)
-		{
-			if (_scaleX != value) mc.scaleX = value;
-		}
-		return _scaleX = value;
-	}
-	
-	override private function set_visible(value:Bool):Bool 
-	{
-		if (TileLayer.starling_init)
-		{
-			if (_visible != value) mc.visible = value;
-		}
-		return _visible = value;
-	}
+	//override private function set_alpha(value:Float):Float 
+	//{
+		//if (TileLayer.starling_init)
+		//{
+			//if (_alpha != value) container.alpha = value;
+		//}
+		//return _alpha = value;
+	//}
 	
 	override private function set_color(value:Int):Int 
 	{
@@ -141,25 +135,28 @@ class TileClip extends TileSprite
 	
 	override function init(layer:TileLayer):Void
 	{
+		this.layer = layer;
+		
 		#if flash
 		if (!TileLayer.starling_init)
 		{
-			this.layer = layer;
+			
 			frames = layer.tilesheet.getAnim(tile);
 			indice = frames[0];
 			size = layer.tilesheet.getSize(indice);
 			time = 0;
 			prevFrame = -1;
 		}
-		else
+		else if (container.numChildren == 0)
 		{
-			if (layer != null)
-			{
-				if (layer.useAdditive) mc.blendMode = BlendMode.ADD;
-			}
+			mc = new MovieClip(layer.tilesheet.texture_atlas.getTextures(tile), fps);
+			mc.alignPivot();
+			size = new Rectangle(0, 0, mc.width, mc.height);
+			container.addChild(mc);
+			
+			if (layer.useAdditive) mc.blendMode = BlendMode.ADD;
 		}
 		#else
-			this.layer = layer;
 			frames = layer.tilesheet.getAnim(tile);
 			indice = frames[0];
 			size = layer.tilesheet.getSize(indice);

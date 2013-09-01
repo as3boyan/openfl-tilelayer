@@ -12,6 +12,7 @@ import flash.geom.Rectangle;
 import starling.display.BlendMode;
 import starling.display.Image;
 import starling.display.MovieClip;
+import starling.display.Sprite;
 #end
 
 /**
@@ -50,6 +51,7 @@ class TileSprite extends TileBase
 	
 	#if flash
 	var img:Image;
+	var container:Sprite;
 	#end
 
 	public function new(layer:TileLayer, tile:String) 
@@ -73,29 +75,21 @@ class TileSprite extends TileBase
 		_mirror = 0;
 		_indice = -1;
 		#if flash
-		bmp = new Bitmap();
+		if (TileLayer.starling_init)
+		{
+			container = new Sprite();
+		}
+		else
+		{
+			bmp = new Bitmap();
+		}
 		_matrix = new Matrix();
 		#else
 		_transform = new Array<Float>();
 		#end
 		dirty = true;
 		
-		if(!TileLayer.starling_init) this.tile = tile;
-		
-		#if flash
-		if (TileLayer.starling_init && !Reflect.hasField(this, "fps"))
-		{			
-			//img = new Image(layer.tilesheet.texture_atlas.getTextures(tile)[0]);
-			img = new Image(StarlingAssets.texture_atlas.getTextures(tile)[0]);
-			img.alignPivot();
-			size = new Rectangle(0, 0, img.width, img.height);
-				
-			if (layer != null)
-			{
-				if (layer.useAdditive) img.blendMode = BlendMode.ADD;
-			}
-		}
-		#end
+		this.tile = tile;
 	}
 	
 	#if flash
@@ -104,7 +98,7 @@ class TileSprite extends TileBase
 	{
 		if (TileLayer.starling_init)
 		{
-			if (_x != value) img.x = value;
+			if (_x != value) container.x = value;
 		}
 
 		super.set_x(value);
@@ -115,7 +109,7 @@ class TileSprite extends TileBase
 	{
 		if (TileLayer.starling_init)
 		{
-			if (_y != value) img.y = value;
+			if (_y != value) container.y = value;
 		}
 		super.set_y(value);
 		return value;
@@ -125,23 +119,26 @@ class TileSprite extends TileBase
 	
 	override public function init(layer:TileLayer):Void
 	{
+		this.layer = layer;
+		
 		#if flash
 		if (!TileLayer.starling_init)
 		{
-			this.layer = layer;
 			var indices = layer.tilesheet.getAnim(tile);
 			indice = indices[0];
 			size = layer.tilesheet.getSize(indice);
 		}
-		else
-		{
-			if (layer != null)
-			{				
-				if (layer.useAdditive) img.blendMode = BlendMode.ADD;
-			}
+		else if (container.numChildren == 0)
+		{			
+			
+			img = new Image(layer.tilesheet.texture_atlas.getTextures(tile)[0]);
+			img.alignPivot();
+			size = new Rectangle(0, 0, img.width, img.height);
+			container.addChild(img);
+				
+			if (layer.useAdditive) img.blendMode = BlendMode.ADD;
 		}
 		#else
-			this.layer = layer;
 			var indices = layer.tilesheet.getAnim(tile);
 			indice = indices[0];
 			size = layer.tilesheet.getSize(indice);
@@ -150,7 +147,7 @@ class TileSprite extends TileBase
 	
 	#if flash
 	override public function getView():DisplayObject { return bmp; }
-	override public function getView2():starling.display.DisplayObject { return img; }
+	override public function getView2():starling.display.DisplayObject { return container; }
 	#end
 
 	public var tile(get_tile, set_tile):String;
@@ -202,7 +199,7 @@ class TileSprite extends TileBase
 		#if flash	
 		if (TileLayer.starling_init)
 		{
-			img.rotation = value;
+			container.rotation = value;
 			
 			if (_rotation != value) 
 			{
@@ -241,7 +238,7 @@ class TileSprite extends TileBase
 			{
 			_scaleX = value;
 			_scaleY = value;
-			img.scaleX = img.scaleY = value;
+			container.scaleX = container.scaleY = value;
 			}
 		}
 		else
@@ -274,7 +271,7 @@ class TileSprite extends TileBase
 		#if flash
 		if (TileLayer.starling_init)
 		{
-			img.scaleX = value;
+			container.scaleX = value;
 			_scaleX = value;
 		}
 		else
@@ -303,7 +300,7 @@ class TileSprite extends TileBase
 		#if flash
 		if (TileLayer.starling_init)
 		{
-			img.scaleY = value;
+			container.scaleY = value;
 			_scaleY = value;
 		}
 		else
@@ -350,7 +347,7 @@ class TileSprite extends TileBase
 	{
 		if (TileLayer.starling_init)
 		{
-			if ( _visible != value) img.visible = value;
+			if ( _visible != value) container.visible = value;
 		}
 		return super.set_visible(value);
 	}
@@ -440,7 +437,7 @@ class TileSprite extends TileBase
 	{
 		if (TileLayer.starling_init)
 		{
-			if (_alpha != value) getView2().alpha = value;
+			if (_alpha != value) container.alpha = value;
 		}
 		return _alpha = value;
 	}

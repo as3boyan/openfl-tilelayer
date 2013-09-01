@@ -167,16 +167,16 @@ class TileGroup extends TileBase
 	{
 		if (item.parent == null) return item;
 
-		#if flash
-		
-		if (TileLayer.starling_init)
-		{
-			container2.removeChild(item.getView2());
-			item.parent = null;
-			return item;
-		}
-		
-		#end
+		//#if flash
+		//
+		//if (TileLayer.starling_init)
+		//{
+			//container2.removeChild(item.getView2());
+			//item.parent = null;
+			//return item;
+		//}
+		//
+		//#end
 		
 		if (item.parent != this) {
 			trace("Invalid parent");
@@ -186,7 +186,14 @@ class TileGroup extends TileBase
 		if (index >= 0) 
 		{
 			#if flash
-				container.removeChild(item.getView());
+				if (TileLayer.starling_init)
+				{
+					container2.removeChild(item.getView2());
+				}
+				else
+				{
+					container.removeChild(item.getView());
+				}
 			#end
 			children.splice(index, 1);
 			item.parent = null;
@@ -230,18 +237,18 @@ class TileGroup extends TileBase
 
 	public function getChildIndex(item:TileBase):Int
 	{
-		#if flash
-		if (TileLayer.starling_init)
-		{
-			return container2.getChildIndex(item.getView2());
-		}
-		else
-		{
+		//#if flash
+		//if (TileLayer.starling_init)
+		//{
+			//return container2.getChildIndex(item.getView2());
+		//}
+		//else
+		//{
+			//return indexOf(item);
+		//}
+		//#else
 			return indexOf(item);
-		}
-		#else
-			return indexOf(item);
-		#end
+		//#end
 	}
 	
 	public function setChildIndex(item:TileBase, index:Int) 
